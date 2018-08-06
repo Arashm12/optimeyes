@@ -14,7 +14,7 @@ import ransac
 # the program will learn the correspondence and start drawing a blue blur
 # where you look. It's important to keep your head still (in position AND angle)
 # or it won't work.
-doTraining = False
+doTraining = True
 
 
 
@@ -23,14 +23,17 @@ doTraining = False
 
 
 def featureCenter(f):
+    debugPrint("featureCenter")
     return (.5*(f.mExtents[0]+f.mExtents[1]),.5*(f.mExtents[2]+f.mExtents[3]) )
 
 # returns center in form (y,x)
 def featureCenterXY(rect):
+    debugPrint("featureCenterXY")
     #eyes are arrays of the form [minX, minY, maxX, maxY]
     return (.5*(rect[0]+rect[2]), .5*(rect[1]+rect[3]))
 
 def centeredBox(feature1, feature2, boxWidth, boxHeight, yOffsetToAdd = 0):
+    debugPrint("centeredBox")
     f1 = np.array(featureCenterXY(feature1))
     f2 = np.array(featureCenterXY(feature2))
     center = (f1[:]+f2[:])/2
@@ -40,11 +43,13 @@ def centeredBox(feature1, feature2, boxWidth, boxHeight, yOffsetToAdd = 0):
 
 
 def contains(outerFeature, innerFeature):
+    debugPrint("contains")
     p = featureCenterXY(innerFeature)
     #eyes are arrays of the form [minX, minY, maxX, maxY]
     return p[0] > outerFeature[0] and p[0] < outerFeature[2] and p[1] > outerFeature[1] and p[1] < outerFeature[3]
 
 def containsPoint(outerFeature, p):
+    #debugPrint("containsPoint")
     #eyes are arrays of the form [minX, minY, maxX, maxY]
     return p[0] > outerFeature[0] and p[0] < outerFeature[2] and p[1] > outerFeature[1] and p[1] < outerFeature[3]
 
@@ -52,6 +57,7 @@ def containsPoint(outerFeature, p):
 # Returns the first eyes that are inside the face but not inside each other.
 # Eyes are returned as the tuple (leftEye, rightEye)
 def getLeftAndRightEyes(faces, eyes):
+    #debugPrint("getLeftAndRightEyes")
     #loop through detected faces. We'll do our processing on the first valid one.
     if len(eyes)==0:
         return ()
@@ -78,7 +84,7 @@ def getLeftAndRightEyes(faces, eyes):
 
     return ()
 
-verbose=True
+verbose=False
 
 def debugPrint(s):
     if verbose:
@@ -87,6 +93,7 @@ def debugPrint(s):
 showMainImg=True;
 
 def debugImg(arr):
+    debugPrint("debugImg")
     global showMainImg
     showMainImg=False;
     toShow = cv2.resize((arr-arr.min())*(1.0/(arr.max()-arr.min())),(0,0), fx=8,fy=8,interpolation=cv2.INTER_NEAREST)
@@ -95,6 +102,7 @@ def debugImg(arr):
 # displays data that is stored in a sparse format. Uses the coords to draw the corresponding
 # element of the vector, on a blank image of dimensions shapeToCopy
 def debugImgOfVectors(vectorToShow, gradXcoords, gradYcoords, shapeToCopy):
+    debugPrint("debugImgOfVectors")
     img = np.zeros(shapeToCopy)
     for i,gradXcoord in enumerate(gradXcoords):
         img[gradYcoords[i]][gradXcoord] = vectorToShow[i]
@@ -116,6 +124,7 @@ eyeCounter = 0
 # Returns (cy,cx) of the pupil center, where y is down and x is right. You should pass in a grayscale Cv2 image which
 # is closely cropped around the center of the eye (using the Haar cascade eye detector)
 def getPupilCenter(gray, getRawProbabilityImage=False):
+    debugPrint("getPupilCenter")
 ##    (scleraY, scleraX) = np.unravel_index(gray.argmax(),gray.shape)
 ##    scleraColor = colors[scleraY,scleraX,:]
 ##    img[scleraX,scleraY] = (255,0,0)
@@ -189,6 +198,7 @@ lastCornerProb = np.ones([1,1])
 # Returns (cy,cx) of the eye corner, where y is down and x is right. You should pass in a grayscale Cv2 image which
 # is closely cropped around the corner of the eye (using the Haar cascade eye detector)
 def getEyeCorner(gray):
+    debugPrint("getEyeCorner")
 ##    (scleraY, scleraX) = np.unravel_index(gray.argmax(),gray.shape)
 ##    scleraColor = colors[scleraY,scleraX,:]
 ##    img[scleraX,scleraY] = (255,0,0)
@@ -251,6 +261,7 @@ def getEyeCorner(gray):
 # Estimates the probability that the given cx,cy is the pupil center, by taking
 # (its vector to each gradient location) dot (the gradient vector)
 def phi(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords, IRIS_RADIUS):
+    debugPrint("phi")
     vecx = gradXcoords-cx
     vecy = gradYcoords-cy
     lengthsSquared = np.square(vecx)+np.square(vecy)
@@ -268,6 +279,7 @@ def phi(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords, IRIS_RADIUS):
 # only uses gradients which are near the peak of a histogram of distance
 # cx and cy may be integers or floating point.
 def phiWithHist(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords, IRIS_RADIUS):
+    #debugPrint("phiWithHist")
     vecx = gradXcoords-cx
     vecy = gradYcoords-cy
     lengthsSquared = np.square(vecx)+np.square(vecy)
@@ -296,6 +308,7 @@ def phiWithHist(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords, IRIS_RADIUS):
 # only uses gradients which are near the peak of a histogram of distance
 # cx and cy may be integers or floating point.
 def phiCorner(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords):
+    debugPrint("phiCorner")
     vecx = gradXcoords-cx
     vecy = gradYcoords-cy
     angles = np.arctan2(vecy,vecx)
@@ -332,6 +345,7 @@ def phiCorner(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords):
 
 #for debugging
 def phiTest(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords):
+    debugPrint("phiTest")
     for ix,xcoord in enumerate(gradXcoords):
         if xcoord==cx and gradYcoords[ix]==cy:
             return np.atan2(gradDY[ix],gradDX[ix])
@@ -341,11 +355,14 @@ def phiTest(cx,cy,gradDX,gradDY,gradXcoords,gradYcoords):
 # YXoffsetOfSecondWithinFirst - priorToMultiply will be shifted by this amount in space
 # defaultPriorValue - if not all of newProb is covered by priorToMultiply, this scalar goes in the uncovered areas.
 def multiplyProbImages(newProb, priorToMultiply, YXoffsetOfSecondWithinFirst, defaultPriorValue):
+    debugPrint("multiplyProbImages")
     if np.any(YXoffsetOfSecondWithinFirst > newProb.shape) or np.any(-YXoffsetOfSecondWithinFirst > priorToMultiply.shape):
+        debugPrint("multiplyProbImages1")
         print "multiplyProbImages aborting - zero overlap. Offset and matrices:"
         print YXoffsetOfSecondWithinFirst
         print newProb.shape
         print priorToMultiply.shape
+        debugPrint("multiplyProbImages2")
         return newProb*defaultPriorValue
     prior = np.ones(newProb.shape)*defaultPriorValue # Most of this will get overwritten. For areas that won't be, with fill with default value.
     #offsets
@@ -353,25 +370,33 @@ def multiplyProbImages(newProb, priorToMultiply, YXoffsetOfSecondWithinFirst, de
     endPrior = [0,0]
     startNew = [0,0]
     endNew = [0,0]
+    debugPrint("multiplyProbImages4")
     for i in xrange(2):
         #offset=0
         # NOT THIS: x[1:2][1:2]
         # THIS: x[1:2,1:2]
         offset = int(round(YXoffsetOfSecondWithinFirst[i])) # how much to offset 'prior' within 'newProb', for the current dimension
+        debugPrint("multiplyProbImages3")
+        #Important**********************************
         print offset
         if offset >= 0: # prior goes right of 'newProb', in the world. So prior will be copied into newProb at a positive offset
+            #debugPrint("multiplyProbImages4")
             startPrior[i] = 0 #index within prior
             endPrior[i] = min(priorToMultiply.shape[i],newProb.shape[i]-offset) #how much of prior to copy
             startNew[i]=offset
             endNew[i]=offset+endPrior[i]
+            #debugPrint("multiplyProbImages4.1")
         else: # prior goes left of 'newProb', in the world.
+            #debugPrint("multiplyProbImages5")
             startPrior[i] = -offset
             endPrior[i] = min(priorToMultiply.shape[i], startPrior[i]+newProb.shape[i])
             startNew[i]=0
             endNew[i]=endPrior[i]-startPrior[i]
+            #debugPrint("multiplyProbImages5.1")
     prior[startNew[0]:endNew[0],startNew[1]:endNew[1]] = priorToMultiply[startPrior[0]:endPrior[0],startPrior[1]:endPrior[1]]
     #prior[1:10,1:10] = priorToMultiply[1:10,1:10]
     #now, prior holds the portion of priorToMultiply which overlapped newProb.
+    debugPrint("multiplyProbImages6")
     return newProb * prior
 
 
@@ -380,6 +405,7 @@ def multiplyProbImages(newProb, priorToMultiply, YXoffsetOfSecondWithinFirst, de
 ## minimumFeatureSize (ySize,xSize) tuple holding the smallest object you'd be looking for. E.g. (30,30)
 ## returns a numpy ndarray where rects[0] is the first detection, and holds [minX, minY, maxX, maxY] where +Y = downward
 def detect(img, cascade, minimumFeatureSize=(20,20)):
+    #debugPrint("detect")
     if cascade.empty():
         raise(Exception("There was a problem loading your Haar Cascade xml file."))
     rects = cascade.detectMultiScale(img, scaleFactor=1.3, minNeighbors=1, minSize=minimumFeatureSize)
@@ -389,6 +415,7 @@ def detect(img, cascade, minimumFeatureSize=(20,20)):
     return rects
 
 def draw_rects(img, rects, color):
+    debugPrint("draw_rects")
     for x1, y1, x2, y2 in rects:
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
 
@@ -428,6 +455,7 @@ warm=0
 # If no valid face is found, returns None.
 # Requires the functions above.
 def getOffset(frame, allowDebugDisplay=True, trackAverageOffset=True, directInferenceLeftRight=True):
+    #debugPrint("getOffset")
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     gray = cv2.equalizeHist(gray)
     # find faces and eyes
@@ -535,6 +563,7 @@ def getOffset(frame, allowDebugDisplay=True, trackAverageOffset=True, directInfe
                         betweenEyes = (np.array(featureCenterXY(leftEye_rightEye[0]))+np.array(featureCenterXY(leftEye_rightEye[1])))/2
                         virtualpoint = ClassyVirtualReferencePoint.ClassyVirtualReferencePoint(haystackKeypoints, haystackDescriptors, (betweenEyes[0], betweenEyes[1]), face, leftEye_rightEye[0], leftEye_rightEye[1])
                     else:
+                        debugPrint("multiplyProbImages4")
                         print "begin fail"
                 else: #we've already created it
                     keypoints, descriptors = detector.detectAndCompute(gray, mask=None)
@@ -583,10 +612,12 @@ class LinearLeastSquaresModel:
     """
     # lists of indices of input and output columns
     def __init__(self,input_columns,output_columns,debug=False):
+        debugPrint("LinearLeastSquaresModel__init__")
         self.input_columns = input_columns
         self.output_columns = output_columns
         self.debug = debug
     def fit(self, data):
+        debugPrint("LinearLeastSquaresModelfit")
 ##        A = numpy.vstack([data[:,i] for i in self.input_columns]).T
 ##        B = numpy.vstack([data[:,i] for i in self.output_columns]).T
 ##        x,resids,rank,s = scipy.linalg.lstsq(A,B)
@@ -595,12 +626,14 @@ class LinearLeastSquaresModel:
         return HT
 
     def get_error( self, data, model):
+        debugPrint("LinearLeastSquaresModelget_error")
         B_fit = data[:,self.input_columns].dot(model)
         err_per_point = np.sum((data[:,self.output_columns]-B_fit)**2,axis=1) # sum squared error per row
         err_per_point = np.sqrt(err_per_point) # I'll see if this helps. If not remove for speed.
         return err_per_point
 
 def getFeatures(XYOffsets, quadratic = True):
+    debugPrint("getFeatures")
 ##    print XYOffsets
     if len(XYOffsets.shape)==1:
         numRows=1
@@ -623,6 +656,7 @@ def getFeatures(XYOffsets, quadratic = True):
 
 RANSAC_MIN_INLIERS = 7
 def RANSACFitTransformation(OffsetsAndPixels):
+    debugPrint("RANSACFitTransformation")
     numInputCols = OffsetsAndPixels.shape[1]-2
     data = np.concatenate( (OffsetsAndPixels[:,0:numInputCols], OffsetsAndPixels[:,numInputCols:] ) , axis=1)
 
@@ -634,6 +668,7 @@ def RANSACFitTransformation(OffsetsAndPixels):
     return HT
 
 def fitTransformation(OffsetsAndPixels):
+    debugPrint("fitTransformation")
     offsets = np.concatenate( (OffsetsAndPixels[:,0:2], np.ones( (OffsetsAndPixels.shape[0],1)) ) , axis=1)
     pixels = OffsetsAndPixels[:,2:]
     HT = np.linalg.lstsq(offsets, pixels)[0] # returns a tuple, where index 0 is the solution matrix.
@@ -641,6 +676,7 @@ def fitTransformation(OffsetsAndPixels):
 
 WINDOW_NAME = "preview"
 def main():
+    debugPrint("main")
     cv2.namedWindow(WINDOW_NAME) # open a window to show debugging images
     vc = cv2.VideoCapture(0) # Initialize the default camera
     try:
@@ -663,6 +699,7 @@ def main():
         cv2.destroyWindow(WINDOW_NAME) #close the window
 
 def mainForTraining():
+    debugPrint("mainForTraining")
     import pygamestuff
     crosshair = pygamestuff.Crosshair([7, 2], quadratic = False)
     vc = cv2.VideoCapture(0) # Initialize the default camera
@@ -678,8 +715,11 @@ def mainForTraining():
     try:
         while readSuccessful and recordedEvents < MAX_SAMPLES_TO_RECORD and not crosshair.userWantsToQuit:
             pupilOffsetXYList = getOffset(frame, allowDebugDisplay=False)
+            #debugPrint("mainForTraining1")
             if pupilOffsetXYList is not None: #If we got eyes, check for a click. Else, wait until we do.
+                #debugPrint("mainForTraining2")
                 if crosshair.pollForClick():
+                    #debugPrint("mainForTraining3")
                     crosshair.clearEvents()
                     #print( (xOffset,yOffset) )
                     #do learning here, to relate xOffset and yOffset to screenX,screenY
@@ -688,27 +728,36 @@ def mainForTraining():
                     crosshair.remove()
                     recordedEvents += 1
                     if recordedEvents > RANSAC_MIN_INLIERS:
+                        #debugPrint("mainForTraining4")
     ##                    HT = fitTransformation(np.array(crosshair.result))
                         resultXYpxpy =np.array(crosshair.result)
                         features = getFeatures(resultXYpxpy[:,:-2])
                         featuresAndLabels = np.concatenate( (features, resultXYpxpy[:,-2:] ) , axis=1)
                         HT = RANSACFitTransformation(featuresAndLabels)
+                        #debugPrint("mainForTraining5")
                         print HT
                 if HT is not None: # draw predicted eye position
+                    #debugPrint("mainForTraining6")
                     currentFeatures =getFeatures( np.array( (pupilOffsetXYList[0], pupilOffsetXYList[1]) ))
                     gazeCoords = currentFeatures.dot(HT)
                     crosshair.drawCrossAt( (gazeCoords[0,0], gazeCoords[0,1]) )
             readSuccessful, frame = vc.read()
-    
+
+        debugPrint("mainForTraining7")
         print "writing"
         crosshair.write() #writes data to a csv for MATLAB
         crosshair.close()
+        debugPrint("mainForTraining8")
         print "HT:\n"
         print HT
         resultXYpxpy =np.array(crosshair.result)
+        debugPrint("mainForTraining9")
         print "eyeData:\n"
+        debugPrint("mainForTraining10")
         print getFeatures(resultXYpxpy[:,:-2])
+        debugPrint("mainForTraining11")
         print "resultXYpxpy:\n"
+        debugPrint("mainForTraining12")
         print resultXYpxpy[:,-2:]
     finally:
         vc.release() #close the camera

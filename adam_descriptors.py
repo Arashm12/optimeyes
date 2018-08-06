@@ -29,9 +29,11 @@ def main():
     if rowsize > 1:
         hrows = numpy.array(hdescriptors, dtype = numpy.float32).reshape((-1, rowsize))
         nrows = numpy.array(ndescriptors, dtype = numpy.float32).reshape((-1, rowsize))
+        print "adams_des1"
         print "haystack rows shape", hrows.shape
         print "needle rows shape", nrows.shape
     else:
+        print "adams_des2"
         print '*****************************************************8888'
         hrows = numpy.array(hdescriptors, dtype = numpy.float32)
         nrows = numpy.array(ndescriptors, dtype = numpy.float32)
@@ -40,6 +42,7 @@ def main():
     # kNN training - learn mapping from hrow to hkeypoints index
     samples = hrows
     responses = numpy.arange(len(hkeypoints), dtype = numpy.float32)
+    print "adams_des3"
     print "sample length", len(samples), "response length", len(responses)
     knn = cv2.KNearest()
     knn.train(samples,responses)
@@ -47,9 +50,11 @@ def main():
     # retrieve index and value through enumeration
     for i, descriptor in enumerate(nrows):
         descriptor = numpy.array(descriptor, dtype = numpy.float32).reshape((1, rowsize))
+        print "adams_des4"
         print i, 'descriptor shape', descriptor.shape, 'sample shape', samples[0].shape
         retval, results, neigh_resp, dists = knn.find_nearest(descriptor, 1)
         res, dist =  int(results[0][0]), dists[0][0]
+        print "adams_des5"
         print 'result', res, 'distance', dist
 
         if dist < 0.1:
